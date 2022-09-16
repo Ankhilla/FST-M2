@@ -1,37 +1,51 @@
-package Activities;
+package activities;
 
-import java.util.ArrayList;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import org.testng.annotations.Test;
 
 public class Activity1 {
-    static ArrayList<String> list;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        list = new ArrayList<String>();
-        list.add("alpha");
-        list.add("beta");
+    final static String ROOT_URI = "https://petstore.swagger.io/v2/pet";
+
+    @Test(priority=1)
+    public void addNewPet() {
+        String reqBody = "{"
+                + "\"id\": 77232,"
+                + "\"name\": \"Riley\","
+                + " \"status\": \"alive\""
+                + "}";
+
+        Response response =
+                given().contentType(ContentType.JSON)
+                        .body(reqBody)
+                        .when().post(ROOT_URI);
+        response.then().body("id", equalTo(77232));
+        response.then().body("name", equalTo("Riley"));
+        response.then().body("status", equalTo("alive"));
     }
 
-    @Test
-    public void insertTest() {
-
-        assertEquals(2, list.size(), "Wrong size");
-        list.add(2, "charlie");
-        assertEquals(3, list.size(), "Wrong size");
-        assertEquals("alpha", list.get(0), "Wrong element");
-        assertEquals("beta", list.get(1), "Wrong element");
-        assertEquals("charlie", list.get(2), "Wrong element");
+    @Test(priority=2)
+    public void getPetInfo() {
+        Response response =
+                given().contentType(ContentType.JSON)
+                        .when().pathParam("petId", "77232")
+                        .get(ROOT_URI + "/{petId}");
+        response.then().body("id", equalTo(77232));
+        response.then().body("name", equalTo("Riley"));
+        response.then().body("status", equalTo("alive"));
     }
 
-
-    @Test
-    public void replaceTest() {
-        list.set(1, "charlie");
-        assertEquals(2, list.size(), "Wrong size");
-        assertEquals("alpha", list.get(0), "Wrong element");
-        assertEquals("charlie", list.get(1), "Wrong element");
+    @Test(priority=3)
+    public void deletePet() {
+        Response response =
+                given().contentType(ContentType.JSON)
+                        .when().pathParam("petId", "77232")
+                        .delete(ROOT_URI + "/{petId}");
+        response.then().body("code", equalTo(200));
+        response.then().body("message", equalTo("77232"));
     }
 }
